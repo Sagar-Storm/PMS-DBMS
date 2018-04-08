@@ -5,14 +5,9 @@ from django.core.validators import MinLengthValidator, RegexValidator
 from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete
 from django.contrib.auth.models import User
-
-
-name_regex = RegexValidator(regex=r'^[a-zA-Z\s]*$', message='Name should only contain characters')
-phone_regex = RegexValidator(regex=r'^[789]\d{9}$', message='Invalid Phone Number')
-register_regex = RegexValidator(regex=r'^1(RV|rv)\d{2}[a-zA-Z]{2}\d{3}$', message='Register Number is Invalid')
-
-
-
+from .validators import *
+from .helpers.models_helper import *
+from .helpers.views_helper import *
 
 
 class Applicant(models.Model):
@@ -61,23 +56,25 @@ class Application(models.Model):
     )
 
 
-    ApplicantId = models.OneToOneField('Applicant', blank = False, null = False)
-    FirstName = models.CharField(max_length = 30, validators = [name_regex], null = False, blank = False)
-    MiddleName = models.CharField(max_length = 30, validators = [name_regex])
-    LastName = models.CharField(max_length = 30, validators = [name_regex])
-    DateOfBirth = models.DateField()
+    ApplicantId = models.OneToOneField('Applicant', blank = False, null = False, on_delete = models.CASCADE)
+    FirstName = models.CharField(max_length = 30, validators = [name_regex], null = False, blank = False, default='sagar')
+    MiddleName = models.CharField(max_length = 30, validators = [name_regex], default='sagar')
+    LastName = models.CharField(max_length = 30, validators = [name_regex], default='sagar')
+    DateOfBirth = models.DateField(default ='1997-09-01')
     Gender = models.CharField(max_length=10, choices = GENDER, default = 'm')
-    FlatNo = models.CharField(max_length=15)
+    FlatNo = models.CharField(max_length=15, default ='32')
     State = models.CharField(max_length = 30, choices = CITIES, default='a')
     City = models.CharField(max_length = 30, choices = STATES , default='a')
-    PlaceOfBirth = models.CharField(max_length = 30, blank = False, null = False)
+    PlaceOfBirth = models.CharField(max_length = 30, blank = False, null = False, default='somewhere')
+
+#add them to their own file when cleaning up
 
 
 class Documents(models.Model):
-        ApplicantId = models.ForeignKey('Applicant', blank = False, null = False)
-        AddressProof = models.FilePathField()
-        BirthCertificate = models.FilePathField()
-        PaymentReceipt = models.FilePathField()
+        ApplicationId= models.OneToOneField('Application', blank = False, null = True, on_delete = models.CASCADE)
+        AddressProof = models.ImageField(upload_to = get_address_folder, validators = [validate_file_extension, file_size])
+        BirthCertificate = models.ImageField(upload_to = get_birth_certificate_folder, validators = [validate_file_extension, file_size])
+        PaymentReceipt = models.ImageField(upload_to = get_payment_receipt_folder, validators = [validate_file_extension, file_size])
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -95,6 +92,8 @@ def save_user_profile(sender, instance, **kwargs):
 
 
 class Status(models.Model):
-    ApplicantId = models.OneToOneField('Applicant', blank = False, null = False)
-    status = models.CharField(max_length = 500, blank = False, null = False)
+    ApplicationId = models.OneToOneField('Application', blank = False, null = True, on_delete = models.CASCADE)
+    Message = models.CharField(max_length = 500, blank = False, null = False)
+
+
 

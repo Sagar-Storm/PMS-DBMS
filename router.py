@@ -30,16 +30,20 @@ def set_message(request, message):
 def clear_message(request):
     request.session['message'] = None
 
+def handle_redirection(request):
+    if request.user.profile.type == 'u':
+        return redirect('dashboard')
+    elif request.user.profile.type == 'a':
+        return redirect('dashboard_a')
+    else :
+        return redirect('dashboard_p')
+
 def handle_already_logged_in_error(request):
     request.session['message'] = LOGGED_IN_ALREADY_MESSAGE
-    return redirect('home_page')
+    return handle_redirection(request)
 
 def handle_lacks_privileges_error(request):
     request.session['message'] = NOT_PRIVILEGED_MESSAGE
-    return redirect('home_page')
+    return handle_redirection(request)
 
-def homePage(request):
-        message = request.session.get('message')
-        request.session['message'] = None
-        return render(request, 'pmsApp/home_page.html', {'message': message})
 

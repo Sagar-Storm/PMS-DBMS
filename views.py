@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.contrib.auth import authenticate, login, logout
-from .models import Applicant, Documents, Application
-from .forms import  ApplicationForm, RegisterApplicantForm, LoginApplicantForm, LoginAdmin
+from .models import Applicant, Documents, Application, Status
+from .forms import  ApplicationForm, RegisterApplicantForm, LoginApplicantForm, LoginAdmin, DocumentsForm
 from django.contrib.auth.decorators import login_required
 from .router import *
 # Create your views here.
@@ -12,10 +12,14 @@ from .router import *
 
 
 
+def homePage(request):
+        message = request.session.get('message')
+        request.session['message'] = None
+        return render(request, 'pmsApp/home_page.html', {'message': message})
+
 def register_applicant(request):
     if is_logged_in(request):
-         request.session['message'] = 'you are registered already, logout to register with different user'
-         return redirect('home_page')
+       return handle_already_logged_in_error(request)
 
     if request.method == "POST":
         form  = RegisterApplicantForm(request.POST)
@@ -30,6 +34,8 @@ def register_applicant(request):
 def login_applicant(request):
     if is_logged_in(request):
        return handle_already_logged_in_error(request)
+    message = request.session['message']
+    request.session['message'] = None
     error = None
     if request.method == "POST":   
         form = LoginApplicantForm(request.POST or None)
@@ -37,7 +43,6 @@ def login_applicant(request):
             user = authenticate(username = form.cleaned_data["username"], password = form.cleaned_data['password'])
             if user is not None and user.profile.type == 'u':
                 login(request, user)
-            
                 return redirect('dashboard', permanent = True)
             else:
                 error = 'incorrect username and password'
@@ -55,26 +60,17 @@ def dashboard(request) :
         message = request.session['message']
         request.session['message'] = None
         applicant = Applicant.objects.get(MailId = request.user.username)
-        has_applied =  applicant.application
-        if has_applied:
-            status = applicant.status.status
+        has_applied = False
+        status = None
+        if hasattr(applicant, 'application'):
+            has_applied = True
+            status = applicant.application.status.Message
         return render(request, 'pmsApp/applicant/dashboard.html', {"user": applicant, "message": message, "has_applied": has_applied , "status": status, "error": error})
     return handle_lacks_privileges_error(request)
 
 
 
-# def post_new(request):
-#     if request.method == "POST":
-#         form = PostForm(request.POST)
-#         if form.is_valid():
-#             post = form.save(commit=False)
-#             post.author = request.user
-#             post.published_date = timezone.now()
-#             post.save()
-#             return redirect('post_detail', pk=post.pk)
-#     else:
-#         form = PostForm()
-#     return render(request, 'pmsApp/post_edit.html', {'form': form})
+
 
 @login_required(login_url='/login')
 def submit_application(request): 
@@ -83,18 +79,27 @@ def submit_application(request):
         if  Application.objects.filter(ApplicantId = applicant).exists():
             request.session['message'] = ALREADY_APPLIED_FOR_PASSPORT_MESSAGE
             return redirect('dashboard')
+
         if request.method == "POST":
-            form = ApplicationForm(request.POST or None)
-            if form.is_valid():
-                application  = form.save(commit = False)
+            form1 = ApplicationForm(request.POST or None)
+            form2 = DocumentsForm(request.POST , request.FILES)
+            if  not form2.is_valid():
+                print("invalid form2")
+            if form1.is_valid() and form2.is_valid():
+                application  = form1.save(commit = False)
                 application.ApplicantId = Applicant.objects.get(MailId = request.user.username)
-                application.status = STATUS_1
-                form.save()
+                application.save()
+                Status(ApplicationId = application, Message = STATUS_1).save()
+               
+                documents = form2.save(commit = False)
+                documents.ApplicationId = application
+                documents.save()
                 request.session['message'] = APPLICATION_SUBMITTED_SUCCESSFULLY_MESSAGE
                 return redirect('dashboard')
         else:
-            form = ApplicationForm()
-        return render(request, 'pmsApp/applicant/application_form.html', {'form': form})
+            form1 = ApplicationForm()
+            form2 = DocumentsForm()
+        return render(request, 'pmsApp/applicant/application_form.html', {'form1': form1, 'form2': form2})
     return handle_lacks_privileges_error(request)
 
 @login_required(login_url='home_page')
@@ -110,11 +115,14 @@ def logout_view(request):
         return redirect('login_police_officer')
 
 def login_admin(request):
+
     if is_logged_in(request):
         return handle_already_logged_in_error(request)
     error = None
+
     if request.method == "POST":   
         form = LoginApplicantForm(request.POST or None)
+
         if form.is_valid():
             user = authenticate(username = form.cleaned_data["username"], password = form.cleaned_data['password'])
             if user is not None and user.profile.type == 'a':

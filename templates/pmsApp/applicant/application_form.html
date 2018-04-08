@@ -1,6 +1,7 @@
  <h1> Fill the Application Form</h1>
-    <form method="POST" class="post-form">{% csrf_token %}
-        {{ form.as_p }}
+    <form method="POST" class="post-form" enctype="multipart/form-data">{% csrf_token %}
+        {{ form1.as_p }}
+        {{ form2.as_p}}
         <button type="submit" class="save btn btn-default">Apply</button>
     </form>
 

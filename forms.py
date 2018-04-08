@@ -1,12 +1,5 @@
 from django import forms
-from .models import Application, Applicant
-
-
-# class PostForm(forms.ModelForm):
-
-#     class Meta:
-#         model = Post
-#         fields = ('title', 'text',)
+from .models import Application, Applicant, Documents
 
 class ApplicationForm(forms.ModelForm):
     class Meta:
@@ -28,5 +21,11 @@ class LoginAdmin(forms.Form) :
                                required=False)
     password = forms.CharField(label="Enter Password", widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
+
+
+class DocumentsForm(forms.ModelForm):
+    class Meta:
+        model = Documents
+        fields = ('BirthCertificate', 'AddressProof', 'PaymentReceipt')
     
     
