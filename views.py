@@ -5,12 +5,8 @@ from .models import Applicant, Documents, Application, Status
 from .forms import  ApplicationForm, RegisterApplicantForm, LoginApplicantForm, LoginAdmin, DocumentsForm
 from django.contrib.auth.decorators import login_required
 from .router import *
+
 # Create your views here.
-
-
-
-
-
 
 def homePage(request):
         message = request.session.get('message')
@@ -83,6 +79,7 @@ def submit_application(request):
         if request.method == "POST":
             form1 = ApplicationForm(request.POST or None)
             form2 = DocumentsForm(request.POST , request.FILES)
+
             if  not form2.is_valid():
                 print("invalid form2")
             if form1.is_valid() and form2.is_valid():
@@ -90,7 +87,6 @@ def submit_application(request):
                 application.ApplicantId = Applicant.objects.get(MailId = request.user.username)
                 application.save()
                 Status(ApplicationId = application, Message = STATUS_1).save()
-               
                 documents = form2.save(commit = False)
                 documents.ApplicationId = application
                 documents.save()
@@ -137,13 +133,97 @@ def login_admin(request):
         form = LoginApplicantForm()
     return render(request, 'pmsApp/admin/login.html', {'form': form, 'error': error, 'user': 'Admin'})
 
-
 @login_required(login_url='/login_admin')
 def dashboard_a(request) :
-    if request.user.profile.type == 'a':
-       return render(request, 'pmsApp/admin/dashboard.html', {})
-    handle_lacks_privileges_error(request)
+    if request.user.profile.type == 'a' :
+        error = None
+        message = request.session['message']
+        request.session['message'] = None
+        new_applications = []
+        reviewed_applications = []
+        accepted_applications = []
 
+        rejected_by_admin_applications = []
+        rejected_by_police_applications  = []
+        dispatched_applications = []
+
+        applications = Application.objects.all()
+
+        for application in applications:
+            if application.status.Message == STATUS_1:
+                new_applications.append(application)
+            elif application.status.Message ==  STATUS_2:
+                reviewed_applications.append(application)
+            elif application.status.Message == STATUS_3:
+                accepted_applications.append(application)
+            elif application.status.Message == STATUS_4:
+                dispatched_applications.append(application)
+            elif application.status.Message == STATUS_5:
+                rejected_by_admin_applications.append(application)
+            else:
+                rejected_by_police_applications.append(application)
+
+        all_applications = [new_applications, reviewed_applications, accepted_applications, dispatched_applications, rejected_by_admin_applications, rejected_by_police_applications]
+        return render(request, 'pmsApp/admin/dashboard.html', { "applications": all_applications, 'message' : message, 'error' : error, })
+    return handle_lacks_privileges_error(request)
+
+@login_required(login_url='/login_admin')
+def view_docs(request, id):
+    if request.user.profile.type in ['a', 'p', 'u']:
+        error = None
+        message = request.session['message']
+        request.session['message'] = None
+        documents = Documents.objects.get(id = id)
+        return render(request, 'pmsApp/admin/documents.html', {"documents": documents, "message" : message, "error": error})
+    return handle_lacks_privileges_error(request)
+
+
+@login_required(login_url='/login_admin')
+def select_police_station(request, id):
+    if request.user.profile.type == 'a':
+        error = None
+        message = request.session['message']
+        request.session['message'] = None
+        return render(request, 'pmsApp/admin/documents.html', {"documents": documents, "message" : message, "error": error})
+    return handle_lacks_privileges_error(request)
+
+
+@login_required(login_url="/login_admin")
+def  accept_application(request, id):
+    if request.user.profile.type == 'a':
+        error = None
+        request.session['message'] =  ACCEPTED_APPLICATION_BY_ADMIN_MESSAGE
+        print(id)
+        application = Application.objects.get(id = id)
+        print(application.ApplicantId.MailId)
+        application.status.Message = STATUS_2 
+        application.status.save()
+        print(application.status.Message)
+        return redirect('dashboard_a')
+    return handle_lacks_privileges_error(request)
+        
+@login_required(login_url="/login_admin")
+def reject_application(request, id):
+    if request.user.profile.type == 'a':
+        error = None
+        request.session['message'] = REJECTED_APPLICATION_BY_ADMIN_MESSAGE
+        application = Application.objects.get(id = id)
+        application.status.Message = STATUS_5
+        application.status.save()
+        return redirect('dashboard_a')
+    return handle_lacks_privileges_error(request)
+
+
+
+@login_required(login_url="/login_admin")
+def dispatch_passport(request, id):
+    if request.user.profile.type == 'a':
+        error = None
+        application = Application.objects.get(id = id)
+        application.status.Message = STATUS_4
+        application.status.save()
+        return redirect('dashboard_a')
+    return handle_lacks_privileges_error(request)
 
 
 def  login_police_officer(request):
@@ -175,9 +255,35 @@ def  register_police_officer(request):
 @login_required(login_url='/login_p')
 def dashboard_p(request):
     if request.user.profile.type == 'p':
-        return render(request, 'pmsApp/police/dashboard.html', {})
+        error = None
+        message = request.session['message']
+        request.session['message'] = None
+        applications = Application.objects.filter(status__Message=STATUS_2)
+        return render(request, 'pmsApp/police/dashboard.html', {"applications": applications, "message": message, "error": error})
     return handle_lacks_privileges_error(request)
 
+
+@login_required(login_url='/login_p')
+def clear_application(request, id):
+    if request.user.profile.type == 'p':
+        error = None
+        request.session['message'] = CLEARED_APPLICATION_BY_POLICE_MESSAGE
+        application = Application.objects.get(id = id)
+        application.status.Message = STATUS_3
+        application.status.save()
+        return redirect('dashboard_p')
+    return handle_lacks_privileges_error(request)
+
+@login_required(login_url='/login_p')
+def reject_application_by_police(request, id):
+    if request.user.profile.type == 'p':
+        error = None
+        request.session['message'] = CLEARED_APPLICATION_BY_POLICE_MESSAGE
+        application = Application.objects.get(id = id)
+        application.status.Message = STATUS_6
+        application.status.save()
+        return redirect('dashboard_p')
+    return handle_lacks_privileges_error(request)
 
 
 # def post_new(request):

@@ -1,1 +1,24 @@
 <h1> Dashboard  police</h1>
+
+{% for application in applications %}
+    <div id = "application">
+        <p> {{ application.ApplicantId.MailId}}</p>
+        <a href = "{% url 'docs'  id=application.documents.id %}" > <button> view documents  </button> </a> 
+        <a href = "{% url 'clear_application'  id=application.id %}" > <button> clear application </button> </a>
+        <a href = "{% url 'reject_application_by_police'  id=application.id %}" > <button> reject application </button> </a>
+    </div>
+    {% empty %}
+    <p> No applicants to be verified </p>
+{% endfor %}
+
+{% if message %}
+<p> {{ message }} </p>
+{% endif %}
+
+{% if error %}
+
+<p> {{ error }} </p>
+
+{% endif %}
+
+<a href = "{% url 'logout' %} "> <button id = "logout_button"> logout </button>

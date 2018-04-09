@@ -1,4 +1,5 @@
 <h1> Welcome {{ user.FirstName }} {{ user.MiddleName }} {{user.LastName}} </h1>
+
 {% if not has_applied %}
     <a href = "{% url 'application_form' %}"> <button id = "apply_for_passport_button"> Apply For Passport </button></a>
 {% endif %}

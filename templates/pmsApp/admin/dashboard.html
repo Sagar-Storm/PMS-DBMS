@@ -1,1 +1,91 @@
 <h1> Dashboard  admin </h1>
+
+{% if applications %} 
+<h3> New Applications </h3>
+
+    
+    {% for application in applications.0 %}
+    
+        <div id = "application">
+                {{ application.ApplicantId.MailId}} 
+                <a href = "{% url 'docs'  id=application.documents.id %}"> <button> view documents  </button> </a> 
+                <a href = {% url 'submit_for_police_verification' id=application.id %}> <button> Submit for police verificiation </button>
+              <a href = "{% url 'verify_application' id=application.id %}"> <button> Submit For Police Verification </button> </a>
+                <a href = "{% url 'reject_application' id=application.id %}"><button> Reject application </button> </a>
+        </div>
+        {% empty %}
+            <p> no new applicants </p>
+        {% endfor %}
+        
+
+
+<h3>  Reviewed Applications </h3>
+
+{% for application in applications.1 %}
+        <div id = "application">
+                {{ application.ApplicantId.MailId }} 
+                <a href = "{% url 'docs'  id=application.documents.id %}"> <button> view documents  </button> </a>     
+        </div>
+{% empty %}
+            <p> no new applicants </p>
+{% endfor %}
+
+<h4> Accepted Applications </h4>
+
+{% for application in applications.2 %}
+        <div id = "application">
+                {{ application.ApplicantId.MailId }} 
+                <a href = "{% url 'docs'  id=application.documents.id %}"> <button> view documents  </button> </a> 
+                <a href = "{% url 'dispatch_passport' id=application.id %}"> <button> dispatch passport </button> </a>
+        </div>
+ {% empty %}
+            <p> no new applicants </p>
+{% endfor %}
+
+<h4> dispatched applications </h4>
+ {% for application in applications.3 %}
+        <div id = "application">
+                {{ application.ApplicantId.MailId }} 
+                <a href = "{% url 'docs'  id=application.documents.id %}"> <button> view documents  </button> </a> 
+        </div>
+{% empty %}
+            <p> no new applicants </p>
+{% endfor %}
+
+<h3> Rejected Applications </h3> 
+<h4> rejected by admin </h4>
+{% for application in applications.4%}
+        <div id = "application">
+                {{ application.ApplicantId.MailId }} 
+                <a href = "{% url 'docs'  id=application.documents.id %}"> <button> view documents  </button> </a> 
+        </div>
+{% empty %}
+            <p> no new applicants </p>
+{% endfor %}
+
+<h4> rejected by police </h4>
+{% for application in applications.5%}
+        <div id = "application">
+                {{ application.ApplicantId.MailId }} 
+                <a href = "{% url 'docs'  id=application.documents.id %}"> <button> view documents  </button> </a> 
+        </div>
+       {% empty %}
+            <p> no new applicants </p>
+{% endfor %}
+
+
+ 
+{% else %}
+<h4> No new Applications </h4>
+
+{% endif %}
+
+
+{% if message %}
+
+<p> {{ message }} </p>
+
+{% endif %}
+
+
+<a href = "{% url 'logout' %} "> <button id = "logout_button"> logout </button>

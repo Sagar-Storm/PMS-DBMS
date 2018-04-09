@@ -17,6 +17,12 @@ def file_size(value):
         if value.size > limit:
             raise ValidationError('File too large. Size should not exceed 100KB.')
 
+def file_size_photo(value):
+        limit = 30 * 1024
+        if value.size > limit:
+            raise ValidationError('File too large. Size should  not exceed 50 KB')
+
+
 name_regex = RegexValidator(regex=r'^[a-zA-Z\s]*$', message='Name should only contain characters')
 phone_regex = RegexValidator(regex=r'^[789]\d{9}$', message='Invalid Phone Number')
 register_regex = RegexValidator(regex=r'^1(RV|rv)\d{2}[a-zA-Z]{2}\d{3}$', message='Register Number is Invalid')
