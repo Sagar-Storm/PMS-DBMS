@@ -159,3 +159,6 @@ def save_police_department(sender, instance, created, **kwargs):
 def delete_police_department(sender, instance, **kwargs):
     User.objects.filter(username = instance.MailId).delete()
 
+
+class DeletedApplication(models.Model):
+    

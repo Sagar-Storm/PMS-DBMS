@@ -1,0 +1,16 @@
+#take care of preventing access to a view with typing out a url by adding checks before rendering a page.
+
+#delete the application if its rejected by admin or police and store the information in a table just for reference of the applicant. The applicant view can use this table to access information like 'no of times applied' and to allow the applicant to apply for passport again.
+
+#add few states and their corresponding district in application_form and use the same information while dispatching an application to a police station.
+
+#add more appropriate and required fields for registering applicant and while applying for passport. add dummy payment fields.
+
+#add css and other design stuff to make it look decently good.
+
+
+
+
+#make use of nginx or apache to simply try them out.
+
+
