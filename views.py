@@ -14,6 +14,11 @@ def homePage(request):
     request.session['message'] = None
     return render(request, 'pmsApp/home_page.html', {'message': message})
 
+def dummyhomePage(request):
+    message = request.session.get('message')
+    if message != None:
+        request.session['message'] = None
+    return render(request, 'pmsApp/home_page.html', {'message': message})
 
 def register_applicant(request):
     if is_logged_in(request):
